@@ -1,7 +1,7 @@
 {
   "id": "neodex.unites",
   "name": "Unités",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "author": "NDesumeur",
   "description": "Un convertisseur d'unités en 19 catégories : longueur, masse, volume, surface, temps, vitesse, température, pression, énergie, puissance, données, débit internet, consommation, cuisine, pointure, monnaies et plus. La valeur s'affiche dans l'unité choisie et dans toutes les autres à la fois ; 31 devises aux taux du jour de la Banque centrale européenne.",
   "icon": "icon.png",
