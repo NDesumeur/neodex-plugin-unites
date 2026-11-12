@@ -10,6 +10,7 @@
   "neobase": ">=4.0.0",
   "type": "app",
   "category": "Outils",
+  "compatibility": ["windows", "android", "linux"],
   "syncMode": "aucune",
   "syncInfo": "Rien : les taux de change sont demandés à l'ouverture.",
   "mobile": true,
