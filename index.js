@@ -1,14 +1,18 @@
 // Unités : ton appli d'origine (HTML et code inchangés), livrée en plugin.
 // Ses données sont dans le dossier du plugin, que NeoDex sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoDex.
 // Elle tourne dans le bac à sable de NeoDex, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
-const HTML = "<div class=\"appWrap\">\n      <div class=\"agHead\"><span class=\"label\">Convertisseur d'unités</span></div>\n      <div id=\"ucCats\" class=\"setBg\"></div>\n      <div class=\"sysCard px\"><div class=\"ucLine\"><input class=\"f\" id=\"ucVal\" value=\"1\" inputmode=\"decimal\" spellcheck=\"false\"><select class=\"f\" id=\"ucFrom\"></select><button class=\"btn px\" id=\"ucSwap\" title=\"Inverser\">⇄</button><select class=\"f\" id=\"ucTo\"></select></div>\n        <div id=\"ucResult\" class=\"sysBig\"></div><div class=\"hint\" id=\"ucNote\"></div></div>\n      <div class=\"sysCard px\"><span class=\"label\">Dans toutes les unités · clic : choisir</span><div id=\"ucAll\"></div></div>\n    </div>";
+const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span class=\"label\">Convertisseur d'unités</span></div>\n      <div id=\"ucCats\" class=\"setBg\"></div>\n      <div class=\"sysCard px\"><div class=\"ucLine\"><input class=\"f\" id=\"ucVal\" value=\"1\" inputmode=\"decimal\" spellcheck=\"false\"><select class=\"f\" id=\"ucFrom\"></select><button class=\"btn px\" id=\"ucSwap\" title=\"Inverser\">⇄</button><select class=\"f\" id=\"ucTo\"></select></div>\n        <div id=\"ucResult\" class=\"sysBig\"></div><div class=\"hint\" id=\"ucNote\"></div></div>\n      <div class=\"sysCard px\"><span class=\"label\">Dans toutes les unités · clic : choisir</span><div id=\"ucAll\"></div></div>\n    </div>";
 /*CSS-MOVED*/ const CSS = `.ucLine{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-#ucVal{width:180px;font-size:20px}
+#ucVal{width:clamp(180px,14vw,260px);font-size:clamp(20px,1.5vw,26px)}
+#ucFrom,#ucTo{font-size:17px}
 #ucFrom,#ucTo{flex:1;min-width:220px}
-#ucSwap{height:46px;font-size:20px}
-#ucResult{font-size:24px;margin-top:6px;white-space:normal;word-break:break-word}
-#ucAll{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2px 20px}
-.ucRow{display:flex;justify-content:space-between;gap:12px;padding:7px 4px;font-size:14px;color:var(--lilac);cursor:var(--cp,pointer);border-bottom:1px solid rgba(255,255,255,.05)}
+#ucSwap{height:clamp(46px,3.2vw,58px);font-size:clamp(20px,1.5vw,26px)}
+#ucResult{font-size:clamp(26px,2.2vw,40px);margin-top:6px;white-space:normal;word-break:break-word}
+#ucAll{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(300px,24vw,420px),1fr));gap:2px clamp(20px,2vw,36px)}
+#ucNote{font-size:15px}
+#ucCats{display:flex;flex-wrap:wrap;gap:6px}
+#ucCats .tab{flex:0 0 auto;width:auto;padding:8px 14px;font-size:clamp(11px,.75vw,13px);line-height:1.3}
+.ucRow{display:flex;justify-content:space-between;gap:12px;padding:9px 6px;font-size:clamp(16px,1.1vw,19px);color:var(--lilac);cursor:var(--cp,pointer);border-bottom:1px solid rgba(255,255,255,.05)}
 .ucRow:hover{background:rgba(255,255,255,.05)}
 .ucRow b{color:#fff;font-weight:600;text-align:right}
 `;  // le style de ce plugin (il utilise les variables du thème de NeoDex)
