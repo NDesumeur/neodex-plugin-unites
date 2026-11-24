@@ -16,5 +16,11 @@ module.exports = async ({ pj, sleep }) => {
   if (r.rows < 3 || r.font < 16) throw new Error('tableau : ' + JSON.stringify(r));
   const over = await pj(`[...document.querySelectorAll('.appWrap *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).length`);
   if (over) throw new Error(over + ' élément(s) débordent à droite');
-  return '5 km = ' + r.res + ', ' + r.rows + ' lignes en ' + r.font + ' px';
+  // le champ unique, puis l'étoile : la conversion entre dans les favoris
+  const a = await pj(`(async () => { const i = document.getElementById('ucAsk'); i.value = '5 pieds en cm'; i.dispatchEvent(new Event('input')); await new Promise(r => setTimeout(r, 100));
+    document.getElementById('ucStar').click(); await new Promise(r => setTimeout(r, 100));
+    return { res: document.getElementById('ucResult').textContent, favs: [...document.querySelectorAll('#ucFavs .btn')].map(b => b.textContent), star: document.getElementById('ucStar').textContent }; })()`);
+  if (!/152,4/.test(a.res) || !a.favs.includes('ft → cm') || a.star !== '★') throw new Error('champ unique / favori : ' + JSON.stringify(a));
+  await pj(`document.getElementById('ucStar').click(), 0`);  // retiré : le profil de test reste propre
+  return '5 pieds = ' + a.res + ' (favori ft → cm) · 5 km = ' + r.res + ', ' + r.rows + ' lignes en ' + r.font + ' px';
 };

@@ -1,7 +1,7 @@
 // Unités : ton appli d'origine (HTML et code inchangés), livrée en plugin.
 // Ses données sont dans le dossier du plugin, que NeoDex sauvegarde (synchro cloud et sauvegardes) ; à la première ouverture elle reprend ce que tu avais dans NeoDex.
 // Elle tourne dans le bac à sable de NeoDex, avec ses outils d'interface (ctx.host) et seulement les autorisations de son plugin.json.
-const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span class=\"label\">Convertisseur d'unités</span></div>\n      <div id=\"ucCats\" class=\"setBg\"></div>\n      <div class=\"sysCard px\"><div class=\"ucLine\"><input class=\"f\" id=\"ucVal\" value=\"1\" inputmode=\"decimal\" spellcheck=\"false\"><select class=\"f\" id=\"ucFrom\"></select><button class=\"btn px\" id=\"ucSwap\" title=\"Inverser\">⇄</button><select class=\"f\" id=\"ucTo\"></select></div>\n        <div id=\"ucResult\" class=\"sysBig\"></div><div class=\"hint\" id=\"ucNote\"></div></div>\n      <div class=\"sysCard px\"><span class=\"label\">Dans toutes les unités · clic : choisir</span><div id=\"ucAll\"></div></div>\n    </div>";
+const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span class=\"label\">Convertisseur d'unités</span><input class=\"f\" id=\"ucAsk\" placeholder=\"Écris : 5 pieds en cm, 100 € en $, 30 °C en °F (Entrée)\" spellcheck=\"false\"></div>\n      <div id=\"ucFavs\" class=\"ucFavs\"></div>\n      <div id=\"ucCats\" class=\"setBg\"></div>\n      <div class=\"sysCard px\"><div class=\"ucLine\"><input class=\"f\" id=\"ucVal\" value=\"1\" inputmode=\"decimal\" spellcheck=\"false\"><select class=\"f\" id=\"ucFrom\"></select><button class=\"btn px\" id=\"ucSwap\" title=\"Inverser\">⇄</button><select class=\"f\" id=\"ucTo\"></select><button class=\"btn px\" id=\"ucStar\" title=\"Garder cette conversion dans les favoris\">☆</button></div>\n        <div id=\"ucResult\" class=\"sysBig\"></div><div class=\"hint\" id=\"ucNote\"></div></div>\n      <div class=\"sysCard px\"><span class=\"label\">Dans toutes les unités · clic : choisir</span><div id=\"ucAll\"></div></div>\n    </div>";
 /*CSS-MOVED*/ const CSS = `.ucLine{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 #ucVal{width:clamp(180px,14vw,260px);font-size:clamp(20px,1.5vw,26px)}
 #ucFrom,#ucTo{font-size:17px}
@@ -10,6 +10,9 @@ const HTML = "<div class=\"appWrap wide\">\n      <div class=\"agHead\"><span cl
 #ucResult{font-size:clamp(26px,2.2vw,40px);margin-top:6px;white-space:normal;word-break:break-word}
 #ucAll{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(300px,24vw,420px),1fr));gap:2px clamp(20px,2vw,36px)}
 #ucNote{font-size:15px}
+#ucAsk{flex:1;max-width:560px;margin-left:auto;font-size:17px;padding:9px 12px}
+.ucFavs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.ucFavs:empty{display:none}.ucFavs .btn{width:auto;padding:6px 12px;font-size:14px}
+#ucStar{height:clamp(46px,3.2vw,58px);font-size:clamp(20px,1.5vw,26px)}#ucStar.on{color:#ffd34f}
 #ucCats{display:flex;flex-wrap:wrap;gap:6px}
 #ucCats .tab{flex:0 0 auto;width:auto;padding:8px 14px;font-size:clamp(11px,.75vw,13px);line-height:1.3}
 .ucRow{display:flex;justify-content:space-between;gap:12px;padding:9px 6px;font-size:clamp(16px,1.1vw,19px);color:var(--lilac);cursor:var(--cp,pointer);border-bottom:1px solid rgba(255,255,255,.05)}
@@ -64,6 +67,40 @@ export default async function (ctx) {
   console.assert(ucConvert('Longueur', 1, 'kilomètre (km)', 'mètre (m)') === 1000 && Math.round(ucConvert('Température', 100, 'degré Celsius (°C)', 'degré Fahrenheit (°F)')) === 212
     && Math.abs(ucConvert('Consommation', 5, 'litres aux 100 km (L/100 km)', 'kilomètres par litre (km/L)') - 20) < 1e-9, 'ucConvert');
   const UC_NAMES = {EUR: 'Euro', USD: 'Dollar américain', GBP: 'Livre sterling', CHF: 'Franc suisse', JPY: 'Yen', CAD: 'Dollar canadien', AUD: 'Dollar australien', CNY: 'Yuan', KRW: 'Won', INR: 'Roupie indienne', BRL: 'Réal', MXN: 'Peso mexicain', SEK: 'Couronne suédoise', NOK: 'Couronne norvégienne', DKK: 'Couronne danoise', PLN: 'Zloty', CZK: 'Couronne tchèque', HUF: 'Forint', RON: 'Leu', TRY: 'Livre turque', ZAR: 'Rand', HKD: 'Dollar de Hong Kong', SGD: 'Dollar de Singapour', NZD: 'Dollar néo-zélandais', THB: 'Baht', IDR: 'Roupie indonésienne', ILS: 'Shekel', ISK: 'Couronne islandaise', MYR: 'Ringgit', PHP: 'Peso philippin', BGN: 'Lev'};
+  // ---- le champ unique : « 5 pieds en cm » ; chaque unité se reconnaît à son nom, son pluriel ou son symbole ----
+  const unacc = w => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  const CUR = {'€': 'EUR', '$': 'USD', '£': 'GBP', '¥': 'JPY', 'euro': 'EUR', 'euros': 'EUR', 'dollar': 'USD', 'dollars': 'USD', 'livre sterling': 'GBP', 'yen': 'JPY', 'yens': 'JPY', 'franc suisse': 'CHF', 'francs suisses': 'CHF'};
+  function ucFind(w) {  // [catégorie, unité] ; le symbole exact d'abord (mm, Mo), puis le nom sans accents, au singulier ou au pluriel
+    const raw = w.trim(), n = unacc(raw), out = [];
+    if (CUR[raw] || CUR[n] || /^[A-Z]{3}$/.test(raw) && ucRates?.[raw]) return ['Monnaies', CUR[raw] || CUR[n] || raw];
+    for (const [cat, c] of Object.entries(UC)) for (const u of Object.keys(c.u || c.f || {})) {
+      const sym = /\(([^)]*)\)$/.exec(u)?.[1]?.split(',')[0].trim(), name = unacc(u.replace(/\s*\(.*\)$/, ''));
+      if (sym === raw) return [cat, u];
+      if (name === n || name + 's' === n || name.replace(/(\S+)/, '$1s') === n || unacc(u) === n || sym && unacc(sym) === n) out.push([cat, u]);
+    }
+    return out[0] || null;
+  }
+  function ucAsk(text) {
+    const m = /^\s*(-?[\d\s  .,]*\d|)\s*(.+?)\s+(?:en|in|to|vers|→|->)\s+(.+?)\s*$/i.exec(text); if (!m) return null;
+    const a = ucFind(m[2]), b = ucFind(m[3]); if (!a || !b || a[0] !== b[0]) return null;
+    return {cat: a[0], from: a[1], to: b[1], v: m[1] ? m[1] : '1'};
+  }
+  console.assert((() => { const r = ucAsk('5 pieds en cm'), t = ucAsk('30 °C en °F'), d = ucAsk('2 Go en Mo'), k = ucAsk('1 000 km en miles');
+    return r?.from === 'pied (ft)' && r.to === 'centimètre (cm)' && r.v === '5' && t?.cat === 'Température' && d?.from === 'gigaoctet (Go, 1000³)' && k?.to === 'mile (mi)' && k.v === '1 000' && !ucAsk('5 kg en cm'); })(), 'unités : champ unique');
+  function ucGo(q) {
+    ucCat = q.cat; $('ucFrom').dataset.cat = ''; ucRender();
+    if (q.cat === 'Monnaies' && !ucRates) return;
+    $('ucFrom').value = q.from; $('ucTo').value = q.to; if (q.v !== undefined) $('ucVal').value = q.v; ucRender();
+  }
+  // ---- les favoris : une conversion gardée en un clic, dans le dossier du plugin ----
+  let ucFavs = (await doc('favs')) || [];
+  const favKey = () => ucCat + '|' + $('ucFrom').value + '|' + $('ucTo').value;
+  const short = u => u.replace(/^.*\((.*)\)$/, '$1').split(',')[0];
+  function ucFavRender() {
+    $('ucFavs').replaceChildren(...ucFavs.map(f => { const b = el('button', 'btn px', short(f.from) + ' → ' + short(f.to)); b.title = f.cat + ' : ' + f.from + ' → ' + f.to + ' (clic droit : retirer)';
+      b.onclick = () => ucGo(f); b.oncontextmenu = e => { e.preventDefault(); ucFavs = ucFavs.filter(x => x !== f); folder.write('favs', ucFavs).catch(() => {}); ucFavRender(); }; return b; }));
+    const on = ucFavs.some(f => f.cat + '|' + f.from + '|' + f.to === favKey()); $('ucStar').textContent = on ? '★' : '☆'; $('ucStar').classList.toggle('on', on);
+  }
   async function ucOpen() {
     if (!ucRates) try {  // European Central Bank rates through Frankfurter (free, no account), updated every working day
       const d = await fetch('https://api.frankfurter.dev/v1/latest?base=EUR').then(r => r.json());
@@ -83,9 +120,15 @@ export default async function (ctx) {
     if (ucCat === 'Monnaies' && !ucRates) { $('ucResult').textContent = 'Taux indisponibles' + (ucRatesErr ? ' : ' + ucRatesErr : ''); $('ucAll').replaceChildren(); return; }
     $('ucResult').textContent = isNaN(v) ? '—' : ucFmt(ucConvert(ucCat, v, a, b)) + ' ' + b.replace(/^.*\((.*)\)$/, '$1');
     $('ucNote').textContent = UC[ucCat].note || (ucCat === 'Monnaies' ? 'Taux de la Banque centrale européenne du ' + new Date(ucRatesAt + 'T12:00').toLocaleDateString('fr-FR') + '.' : '');
+    ucFavRender();
     $('ucAll').replaceChildren(...(isNaN(v) ? [] : units.filter(u => u !== a).map(u => { const r = el('div', 'ucRow'); r.append(el('span', '', label(u)), el('b', '', ucFmt(ucConvert(ucCat, v, a, u)))); r.onclick = () => { $('ucTo').value = u; ucRender(); }; return r; })));
   }
   $('ucVal').oninput = $('ucFrom').onchange = $('ucTo').onchange = ucRender;
+  $('ucAsk').onkeydown = e => { if (e.key !== 'Enter' || !e.target.value.trim()) return; const q = ucAsk(e.target.value); if (!q) return toast('Je n’ai pas compris : écris par exemple « 5 pieds en cm »', true); ucGo(q); };
+  $('ucAsk').oninput = e => { const q = ucAsk(e.target.value); if (q) ucGo(q); };
+  $('ucStar').onclick = () => { const k = favKey(), i = ucFavs.findIndex(f => f.cat + '|' + f.from + '|' + f.to === k);
+    if (i >= 0) ucFavs.splice(i, 1); else ucFavs.push({cat: ucCat, from: $('ucFrom').value, to: $('ucTo').value}); ucFavs = ucFavs.slice(-16); folder.write('favs', ucFavs).catch(() => {}); ucFavRender(); };
+  view.__uc = {ucAsk, ucGo};  // pour le test « local »
   $('ucSwap').onclick = () => { const a = $('ucFrom').value; $('ucFrom').value = $('ucTo').value; $('ucTo').value = a; ucRender(); };
   // ---- fin ----
   ctx.onOpen(() => { ucOpen(); });

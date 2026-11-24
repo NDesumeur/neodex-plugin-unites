@@ -128,5 +128,21 @@
  "vitesse de la lumière (c)": "speed of light (c)",
  "Énergie": "Energy",
  "Équivalences approximatives : elles varient selon les marques.": "Approximate equivalences: they vary depending on the brand.",
- "électronvolt (eV)": "electron volt (eV)"
+ "électronvolt (eV)": "electron volt (eV)",
+ "NFD": "NFD",
+ "EUR": "EUR",
+ "USD": "USD",
+ "GBP": "GBP",
+ "JPY": "JPY",
+ "CHF": "CHF",
+ "5 pieds en cm": "5 pieds en cm",
+ "30 °C en °F": "30 °C en °F",
+ "2 Go en Mo": "2 Go en Mo",
+ "1 000 km en miles": "1 000 km en miles",
+ "5 kg en cm": "5 kg en cm",
+ "Enter": "Enter",
+ "Écris : 5 pieds en cm, 100 € en $, 30 °C en °F (Entrée)": "Type: 5 ft to cm, 100 € in $, 30 °C to °F (Enter)",
+ "Garder cette conversion dans les favoris": "Keep this conversion in favourites",
+ "unités : champ unique": "units: single field",
+ "Je n’ai pas compris : écris par exemple « 5 pieds en cm »": "I did not understand: type for example “5 ft to cm”"
 }
